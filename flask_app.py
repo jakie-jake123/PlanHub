@@ -50,7 +50,7 @@ def webhook():
 
 @app.get("/users")
 def users():
-    return render-template("users.html");
+    return render_template("users.html");
 
 
 
