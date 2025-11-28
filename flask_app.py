@@ -50,7 +50,7 @@ def webhook():
 
 @app.get("/users")
 def users():
-    return "Hello Users";
+    return "<h1>Hello Users</h1><br>Alle User";
 
 
 
