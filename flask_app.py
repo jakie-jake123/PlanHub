@@ -1,24 +1,24 @@
+
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-
-    # ──────────────
-    # Termin erstellen
-    # ──────────────
-    if request.method == "POST":
-        title = request.form.get("title")
-        description = request.form.get("description")
-        due = request.form.get("due_at")
-
-        if not title or not due:
-            return "Titel und Datum sind Pflichtfelder", 400
-
-        db_write(
-            """INSERT INTO todos (user_id, title, description, due)
-               VALUES (%s, %s, %s, %s)""",
-            (current_user.id, title, description, due)
+    # GET
+    if request.method == "GET":
+        todos = db_read(
+            "SELECT id, content, due FROM todos WHERE user_id=%s ORDER BY due",
+            (current_user.id,)
         )
-        return redirect(url_for("index"))
+        return render_template("main_page.html", todos=todos)
+
+    # POST
+    content = request.form["contents"]
+    due = request.form["due_at"]
+    db_write(
+        "INSERT INTO todos (user_id, content, due) VALUES (%s, %s, %s)",
+        (current_user.id, content, due)
+    )
+    return redirect(url_for("index"))
+
 
     # ──────────────
     # Termine aus DB holen
