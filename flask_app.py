@@ -1,144 +1,79 @@
-from flask import Flask, redirect, render_template, request, url_for
-from dotenv import load_dotenv
-import os
-import git
-import hmac
-import hashlib
-from db import db_read, db_write
-from auth import login_manager, authenticate, register_user
-from flask_login import login_user, logout_user, login_required, current_user
-import logging
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
-
-# Load .env variables
-load_dotenv()
-W_SECRET = os.getenv("W_SECRET")
-
-# Init flask app
-app = Flask(__name__)
-app.config["DEBUG"] = True
-app.secret_key = "supersecret"
-
-# Init auth
-login_manager.init_app(app)
-login_manager.login_view = "login"
-
-# DON'T CHANGE
-def is_valid_signature(x_hub_signature, data, private_key):
-    hash_algorithm, github_signature = x_hub_signature.split('=', 1)
-    algorithm = hashlib.__dict__.get(hash_algorithm)
-    encoded_key = bytes(private_key, 'latin-1')
-    mac = hmac.new(encoded_key, msg=data, digestmod=algorithm)
-    return hmac.compare_digest(mac.hexdigest(), github_signature)
-
-# DON'T CHANGE
-@app.post('/update_server')
-def webhook():
-    x_hub_signature = request.headers.get('X-Hub-Signature')
-    if is_valid_signature(x_hub_signature, request.data, W_SECRET):
-        repo = git.Repo('./mysite')
-        origin = repo.remotes.origin
-        origin.pull()
-        return 'Updated PythonAnywhere successfully', 200
-    return 'Unathorized', 401
-
-# Auth routes
-
-@app.get("/users")
-def users():
-    return render_template("users.html");
-
-
-
-
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    error = None
-
-    if request.method == "POST":
-        user = authenticate(
-            request.form["username"],
-            request.form["password"]
-        )
-
-        if user:
-            login_user(user)
-            return redirect(url_for("index"))
-
-        error = "Benutzername oder Passwort ist falsch."
-
-    return render_template(
-        "auth.html",
-        title="In dein Konto einloggen",
-        action=url_for("login"),
-        button_label="Einloggen",
-        error=error,
-        footer_text="Noch kein Konto?",
-        footer_link_url=url_for("register"),
-        footer_link_label="Registrieren"
-    )
-
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    error = None
-
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-
-        ok = register_user(username, password)
-        if ok:
-            return redirect(url_for("login"))
-
-        error = "Benutzername existiert bereits."
-
-    return render_template(
-        "auth.html",
-        title="Neues Konto erstellen",
-        action=url_for("register"),
-        button_label="Registrieren",
-        error=error,
-        footer_text="Du hast bereits ein Konto?",
-        footer_link_url=url_for("login"),
-        footer_link_label="Einloggen"
-    )
-
-@app.route("/logout")
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for("index"))
-
-
-
-# App routes
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    # GET
-    if request.method == "GET":
-        todos = db_read("SELECT id, content, due FROM todos WHERE user_id=%s ORDER BY due", (current_user.id,))
-        return render_template("main_page.html", todos=todos)
 
-    # POST
-    content = request.form["contents"]
-    due = request.form["due_at"]
-    db_write("INSERT INTO todos (user_id, content, due) VALUES (%s, %s, %s)", (current_user.id, content, due, ))
-    return redirect(url_for("index"))
+    # ──────────────
+    # Termin erstellen
+    # ──────────────
+    if request.method == "POST":
+        title = request.form.get("title")
+        description = request.form.get("description")
+        due = request.form.get("due_at")
 
-@app.post("/complete")
-@login_required
-def complete():
-    todo_id = request.form.get("id")
-    db_write("DELETE FROM todos WHERE user_id=%s AND id=%s", (current_user.id, todo_id,))
-    return redirect(url_for("index"))
+        if not title or not due:
+            return "Titel und Datum sind Pflichtfelder", 400
 
-if __name__ == "__main__":
-    app.run()
+        db_write(
+            """INSERT INTO todos (user_id, title, description, due)
+               VALUES (%s, %s, %s, %s)""",
+            (current_user.id, title, description, due)
+        )
+        return redirect(url_for("index"))
+
+    # ──────────────
+    # Termine aus DB holen
+    # ──────────────
+    todos = db_read(
+        """SELECT id, title, description, due, is_exam, silent_mode
+           FROM todos
+           WHERE user_id=%s
+           ORDER BY due""",
+        (current_user.id,)
+    )
+
+    # ──────────────
+    # HTML für Termine bauen
+    # ──────────────
+    termine_html = ""
+
+    for t in todos:
+        termine_html += f"""
+        <div>
+            <strong>{t.title}</strong><br>
+            {t.description or ""}<br>
+            Datum: {t.due.strftime('%d.%m.%Y %H:%M')}<br>
+        """
+
+        if t.is_exam:
+            termine_html += "<p>Dieser Termin ist als Prüfung markiert.</p>"
+
+        if t.silent_mode:
+            termine_html += "<p>Stummschalt-Modus ist aktiv.</p>"
+
+        termine_html += f"""
+            <a href="/silent/{t.id}">Stumm umschalten</a>
+
+            <form action="/exam/{t.id}" method="POST">
+                <input type="number" name="countdown_start"
+                       placeholder="Countdown (Minuten vorher)">
+                <button type="submit">Als Prüfung markieren</button>
+            </form>
+
+            <form action="/complete" method="POST">
+                <input type="hidden" name="id" value="{t.id}">
+                <button type="submit">Termin löschen</button>
+            </form>
+            <hr>
+        </div>
+        """
+
+    # HTML-Datei laden und Platzhalter ersetzen
+    with open("templates/main_page.html", "r", encoding="utf-8") as f:
+        html = f.read()
+
+    html = html.replace(
+        "<!-- TERMINE_WERDEN_HIER_EINGEFUEGT -->",
+        termine_html
+    )
+
+    return html
