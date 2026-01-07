@@ -1,45 +1,101 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Termine</title>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block content %}
 
 <h2>Meine Termine</h2>
 
-<!-- Platzhalter für Termine -->
-<div>
-    <!-- TERMINE_WERDEN_HIER_EINGEFUEGT -->
-</div>
+<!-- ========================= -->
+<!-- TERMINLISTE -->
+<!-- ========================= -->
+<ul>
+  {% for todo in todos %}
+    <li>
 
-<hr>
+      <!-- Titel -->
+      <strong>{{ todo.title }}</strong><br>
 
+      <!-- Beschreibung -->
+      {% if todo.description %}
+        {{ todo.description }}<br>
+      {% endif %}
+
+      <!-- Datum -->
+      Datum:
+      {{ todo.due.strftime('%d.%m.%Y %H:%M') }}
+      <br>
+
+      <!-- Prüfung -->
+      {% if todo.is_exam %}
+        <p>Dieser Termin ist als Prüfung markiert.</p>
+      {% endif %}
+
+      <!-- Stummschalt-Modus -->
+      {% if todo.silent_mode %}
+        <p>Stummschalt-Modus ist aktiv.</p>
+      {% endif %}
+
+      <!-- Stummschalten -->
+      <a href="{{ url_for('silent', todo_id=todo.id) }}">
+        Stummschalt-Modus umschalten
+      </a>
+
+      <!-- Prüfung markieren -->
+      <form action="{{ url_for('exam', todo_id=todo.id) }}" method="POST">
+        <label>
+          Countdown (Minuten vorher):
+          <input type="number" name="countdown_start">
+        </label>
+        <button type="submit">
+          Als Prüfung markieren
+        </button>
+      </form>
+
+      <!-- Termin löschen -->
+      <form action="{{ url_for('complete') }}" method="POST">
+        <input type="hidden" name="id" value="{{ todo.id }}">
+        <button type="submit">
+          Termin löschen
+        </button>
+      </form>
+
+      <hr>
+
+    </li>
+  {% else %}
+    <p>Keine Termine vorhanden.</p>
+  {% endfor %}
+</ul>
+
+<!-- ========================= -->
+<!-- TERMIN ERSTELLEN -->
+<!-- ========================= -->
 <h3>Neuen Termin erstellen</h3>
 
 <form method="POST">
-    <label>
-        Titel:<br>
-        <input type="text" name="title" required>
-    </label>
-    <br><br>
+  <label>
+    Titel:<br>
+    <input type="text" name="title" required>
+  </label>
 
-    <label>
-        Beschreibung:<br>
-        <input type="text" name="description">
-    </label>
-    <br><br>
+  <br><br>
 
-    <label>
-        Datum und Uhrzeit:<br>
-        <input type="datetime-local" name="due_at" required>
-    </label>
-    <br><br>
+  <label>
+    Beschreibung:<br>
+    <input type="text" name="description">
+  </label>
 
-    <button type="submit">Termin erstellen</button>
+  <br><br>
+
+  <label>
+    Datum und Uhrzeit:<br>
+    <input type="datetime-local" name="due_at" required>
+  </label>
+
+  <br><br>
+
+  <button type="submit">
+    Termin erstellen
+  </button>
 </form>
 
-</body>
-</html>
-
-
-      
+{% endblock %}
