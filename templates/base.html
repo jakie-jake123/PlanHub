@@ -24,18 +24,27 @@
         background-color: #f9f9f9;
       }
 
+      /* 🔥 Navbar + Logo */
+      .navbar {
+        min-height: 80px;
+      }
+
       .navbar-brand {
-        font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 14px;
+        font-weight: 700;
+        font-size: 24px;
+        height: 80px;
+        padding: 0 15px;
       }
 
       .navbar-brand img {
-        height: 28px;
-        display: inline-block;
+        height: 56px;   /* <<< LOGO GRÖSSE */
+        width: auto;
       }
 
+      /* Content */
       .todo-list {
         margin-top: 30px;
         list-style: none;
@@ -109,7 +118,7 @@
             <span class="icon-bar"></span>
           </button>
 
-          <!-- ✅ LOGO + NAME -->
+          <!-- ✅ GROSSES LOGO -->
           <a class="navbar-brand" href="/">
             <img
               src="{{ url_for('static', filename='PlanHub_Logo.png') }}"
@@ -122,22 +131,3 @@
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav navbar-right">
             {% if current_user.is_authenticated %}
-              <li><a href="#">Hallo, {{ current_user.username }}</a></li>
-              <li><a href="{{ url_for('logout') }}">Logout</a></li>
-            {% else %}
-              <li><a href="{{ url_for('login') }}">Login</a></li>
-              <li><a href="{{ url_for('register') }}">Registrieren</a></li>
-            {% endif %}
-          </ul>
-        </div>
-      </div>
-    </nav>
-
-    <div class="container">
-      {% block content %}{% endblock %}
-    </div>
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-  </body>
-</html>
