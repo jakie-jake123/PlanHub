@@ -119,16 +119,23 @@ def index():
     # GET → Termine anzeigen
     if request.method == "GET":
         termins = db_read(
-            """
-            SELECT id, title, date, time, is_exam
-            FROM termins
-            WHERE user_id=%s
-            ORDER BY date, time
-            """,
-            (current_user.id,)
-        )
-        return render_template("main_page.html", termins=termins)
+        """
+        SELECT id, title, date, time, is_exam
+        FROM termins
+        WHERE user_id=%s
+        ORDER BY date, time
+        """,
+        (current_user.id,)
+    )
 
+    # ✅ Fix für Jinja2: timedelta → string
+    for t in termins:
+        total_seconds = t['time'].total_seconds()
+        hours = int(total_seconds // 3600)
+        minutes = int((total_seconds % 3600) // 60)
+        t['time_str'] = f"{hours:02d}:{minutes:02d}"  # HH:MM als string
+
+    return render_template("main_page.html", termins=termins)
     # POST → Termin erstellen
     title = request.form["title"]
     date = request.form["date"]
