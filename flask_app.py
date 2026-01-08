@@ -113,12 +113,32 @@ def logout():
 
 #usecase 1 oder so : Termin kreieren
 
+
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    # GET → Termine anzeigen
-    if request.method == "GET":
-        termins = db_read(
+
+    # 🔹 POST → neuen Termin speichern
+    if request.method == "POST":
+        title = request.form["title"]
+        date = request.form["date"]
+        time = request.form["time"]
+
+        if not title or not date or not time:
+            return "Fehler: Titel, Datum und Uhrzeit sind Pflicht", 400
+
+        db_write(
+            """
+            INSERT INTO termins (user_id, title, date, time)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (current_user.id, title, date, time)
+        )
+
+        return redirect(url_for("index"))
+
+    # 🔹 GET → Termine anzeigen
+    termins = db_read(
         """
         SELECT id, title, date, time, is_exam
         FROM termins
@@ -128,31 +148,24 @@ def index():
         (current_user.id,)
     )
 
-    # ✅ Fix für Jinja2: timedelta → string
+    # 🔹 timedelta → string (Fix für Jinja)
+    from datetime import datetime
+
     for t in termins:
-        total_seconds = t['time'].total_seconds()
+        # time (timedelta) → HH:MM
+        total_seconds = t["time"].total_seconds()
         hours = int(total_seconds // 3600)
         minutes = int((total_seconds % 3600) // 60)
-        t['time_str'] = f"{hours:02d}:{minutes:02d}"  # HH:MM als string
+        t["time_str"] = f"{hours:02d}:{minutes:02d}"
+
+        # date → DD.MM.YYYY
+        if isinstance(t["date"], str):
+            t["date_str"] = datetime.strptime(t["date"], "%Y-%m-%d").strftime("%d.%m.%Y")
+        else:
+            t["date_str"] = t["date"].strftime("%d.%m.%Y")
+
 
     return render_template("main_page.html", termins=termins)
-    # POST → Termin erstellen
-    title = request.form["title"]
-    date = request.form["date"]
-    time = request.form["time"]
-
-    if not title or not date or not time:
-        return "Fehler: Titel, Datum und Uhrzeit sind Pflicht", 400
-
-    db_write(
-        """
-        INSERT INTO termins (user_id, title, date, time)
-        VALUES (%s, %s, %s, %s)
-        """,
-        (current_user.id, title, date, time)
-    )
-
-    return redirect(url_for("index"))
 
 
 
