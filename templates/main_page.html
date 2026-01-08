@@ -1,101 +1,48 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <ul class="todo-list">
+          {% for todo in todos %}
+            <li class="todo-item">
+              <form action="/complete" method="POST" class="todo-complete-form">
 
-<h2>Meine Termine</h2>
+                <input type="hidden" name="id" value="{{ todo.id }}">
 
-<!-- ========================= -->
-<!-- TERMINLISTE -->
-<!-- ========================= -->
-<ul>
-  {% for todo in todos %}
-    <li>
+                <!-- Checkbox triggert Submit -->
+                <input
+                  type="checkbox"
+                  class="todo-checkbox"
+                  id="todo-{{ todo.id }}"
+                  name="complete"
+                  value="1"
+                  onchange="this.form.submit()">
 
-      <!-- Titel -->
-      <strong>{{ todo.title }}</strong><br>
+                <label for="todo-{{ todo.id }}" class="todo-content">
+                  {{ todo.content }}
+                  <span class="todo-date">📅 {{ todo.due.strftime('%d.%m.%Y %H:%M') }}</span>
+                </label>
+              </form>
+            </li>
+          {% else %}
+            <div>Nichts zu tun🎉</div>
+          {% endfor %}
+        </ul>
 
-      <!-- Beschreibung -->
-      {% if todo.description %}
-        {{ todo.description }}<br>
-      {% endif %}
+      <div class="todo-form">
+        <form action="." method="POST">
+          <div class="form-group">
+            <label for="contents">TODO</label>
+            <input type="text" id="contents" name="contents" class="form-control"
+              placeholder="Neues TODO eingeben…" required />
+          </div>
 
-      <!-- Datum -->
-      Datum:
-      {{ todo.due.strftime('%d.%m.%Y %H:%M') }}
-      <br>
+          <div class="form-group">
+            <label for="due_at">Fällig am</label>
+            <input id="due_at" name="due_at" type="datetime-local" class="form-control" required>
+            <p class="help-block">Wähle Datum & Uhrzeit (z. B. 07.11.2025 14:30).</p>
+          </div>
 
-      <!-- Prüfung -->
-      {% if todo.is_exam %}
-        <p>Dieser Termin ist als Prüfung markiert.</p>
-      {% endif %}
-
-      <!-- Stummschalt-Modus -->
-      {% if todo.silent_mode %}
-        <p>Stummschalt-Modus ist aktiv.</p>
-      {% endif %}
-
-      <!-- Stummschalten -->
-      <a href="{{ url_for('silent', todo_id=todo.id) }}">
-        Stummschalt-Modus umschalten
-      </a>
-
-      <!-- Prüfung markieren -->
-      <form action="{{ url_for('exam', todo_id=todo.id) }}" method="POST">
-        <label>
-          Countdown (Minuten vorher):
-          <input type="number" name="countdown_start">
-        </label>
-        <button type="submit">
-          Als Prüfung markieren
-        </button>
-      </form>
-
-      <!-- Termin löschen -->
-      <form action="{{ url_for('complete') }}" method="POST">
-        <input type="hidden" name="id" value="{{ todo.id }}">
-        <button type="submit">
-          Termin löschen
-        </button>
-      </form>
-
-      <hr>
-
-    </li>
-  {% else %}
-    <p>Keine Termine vorhanden.</p>
-  {% endfor %}
-</ul>
-
-<!-- ========================= -->
-<!-- TERMIN ERSTELLEN -->
-<!-- ========================= -->
-<h3>Neuen Termin erstellen</h3>
-
-<form method="POST">
-  <label>
-    Titel:<br>
-    <input type="text" name="title" required>
-  </label>
-
-  <br><br>
-
-  <label>
-    Beschreibung:<br>
-    <input type="text" name="description">
-  </label>
-
-  <br><br>
-
-  <label>
-    Datum und Uhrzeit:<br>
-    <input type="datetime-local" name="due_at" required>
-  </label>
-
-  <br><br>
-
-  <button type="submit">
-    Termin erstellen
-  </button>
-</form>
-
+          <button type="submit" class="btn btn-primary">Hinzufügen</button>
+        </form>
+      </div>
 {% endblock %}
