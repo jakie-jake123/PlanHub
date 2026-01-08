@@ -211,6 +211,46 @@ def complete():
     return redirect(url_for("index"))
 """
 
+# termin bearbeiten
+
+@app.route("/edit_termin/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit_termin(id):
+    # Termin laden
+    termin = db_read(
+        "SELECT * FROM termins WHERE id=%s AND user_id=%s",
+        (id, current_user.id),
+        single=True
+    )
+
+    if not termin:
+        return "Termin nicht gefunden", 404
+
+    # POST → speichern
+    if request.method == "POST":
+        title = request.form["title"]
+        date = request.form["date"]
+        time = request.form["time"]
+
+        if not title or not date or not time:
+            return "Alle Felder sind Pflicht", 400
+
+        db_write(
+            """
+            UPDATE termins
+            SET title=%s, date=%s, time=%s
+            WHERE id=%s AND user_id=%s
+            """,
+            (title, date, time, id, current_user.id)
+        )
+
+        return redirect(url_for("index"))
+
+    # GET → Formular anzeigen
+    return render_template("edit_termin.html", termin=termin)
+
+
+
 
 if __name__ == "__main__":
     app.run()

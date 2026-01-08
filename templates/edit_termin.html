@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>✏️ Termin bearbeiten</h2>
+
+<form method="POST">
+
+  <div class="form-group">
+    <label>Titel</label>
+    <input
+      type="text"
+      name="title"
+      class="form-control"
+      value="{{ termin.title }}"
+      required>
+  </div>
+
+  <div class="form-group">
+    <label>Datum</label>
+    <input
+      type="date"
+      name="date"
+      class="form-control"
+      value="{{ termin.date }}"
+      required>
+  </div>
+
+  <div class="form-group">
+    <label>Uhrzeit</label>
+    <input
+      type="time"
+      name="time"
+      class="form-control"
+      value="{{ termin.time }}"
+      required>
+  </div>
+
+  <button type="submit" class="btn btn-primary">
+    💾 Speichern
+  </button>
+
+  <a href="{{ url_for('index') }}" class="btn btn-default">
+    Abbrechen
+  </a>
+
+</form>
+
+{% endblock %}
