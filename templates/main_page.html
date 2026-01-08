@@ -1,48 +1,81 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <ul class="todo-list">
-          {% for todo in todos %}
-            <li class="todo-item">
-              <form action="/complete" method="POST" class="todo-complete-form">
 
-                <input type="hidden" name="id" value="{{ todo.id }}">
+<h2>📅 Meine Termine</h2>
 
-                <!-- Checkbox triggert Submit -->
-                <input
-                  type="checkbox"
-                  class="todo-checkbox"
-                  id="todo-{{ todo.id }}"
-                  name="complete"
-                  value="1"
-                  onchange="this.form.submit()">
+<ul class="termin-list">
+  {% for termin in termins %}
+    <li class="termin-item">
 
-                <label for="todo-{{ todo.id }}" class="todo-content">
-                  {{ todo.content }}
-                  <span class="todo-date">📅 {{ todo.due.strftime('%d.%m.%Y %H:%M') }}</span>
-                </label>
-              </form>
-            </li>
-          {% else %}
-            <div>Nichts zu tun🎉</div>
-          {% endfor %}
-        </ul>
+      <div class="termin-info">
+        <strong>{{ termin.title }}</strong><br>
+        <span>📅 {{ termin.date.strftime('%d.%m.%Y') }}</span>
+        <span>⏰ {{ termin.time.strftime('%H:%M') }}</span>
 
-      <div class="todo-form">
-        <form action="." method="POST">
-          <div class="form-group">
-            <label for="contents">TODO</label>
-            <input type="text" id="contents" name="contents" class="form-control"
-              placeholder="Neues TODO eingeben…" required />
-          </div>
+        {% if termin.is_exam %}
+          <span class="badge">📝 Prüfung</span>
+        {% endif %}
+      </div>
 
-          <div class="form-group">
-            <label for="due_at">Fällig am</label>
-            <input id="due_at" name="due_at" type="datetime-local" class="form-control" required>
-            <p class="help-block">Wähle Datum & Uhrzeit (z. B. 07.11.2025 14:30).</p>
-          </div>
+      <div class="termin-actions">
+        <!-- Termin löschen -->
+        <form action="/delete_termin" method="POST" style="display:inline;">
+          <input type="hidden" name="id" value="{{ termin.id }}">
+          <button type="submit">❌</button>
+        </form>
 
-          <button type="submit" class="btn btn-primary">Hinzufügen</button>
+        <!-- Als Prüfung markieren -->
+        <form action="/mark_exam" method="POST" style="display:inline;">
+          <input type="hidden" name="id" value="{{ termin.id }}">
+          <button type="submit">📝</button>
         </form>
       </div>
+
+    </li>
+  {% else %}
+    <p>Keine Termine vorhanden 🎉</p>
+  {% endfor %}
+</ul>
+
+<hr>
+
+<h3>➕ Neuen Termin erstellen</h3>
+
+<form action="." method="POST" class="termin-form">
+
+  <div class="form-group">
+    <label for="title">Titel</label>
+    <input
+      type="text"
+      id="title"
+      name="title"
+      class="form-control"
+      placeholder="z. B. Matheprüfung"
+      required>
+  </div>
+
+  <div class="form-group">
+    <label for="date">Datum</label>
+    <input
+      type="date"
+      id="date"
+      name="date"
+      class="form-control"
+      required>
+  </div>
+
+  <div class="form-group">
+    <label for="time">Uhrzeit</label>
+    <input
+      type="time"
+      id="time"
+      name="time"
+      class="form-control"
+      required>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Termin erstellen</button>
+</form>
+
 {% endblock %}

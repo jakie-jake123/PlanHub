@@ -109,6 +109,50 @@ def logout():
 
 
 
+
+
+#usecase 1 oder so : Termin kreieren
+
+@app.route("/", methods=["GET", "POST"])
+@login_required
+def index():
+    # GET → Termine anzeigen
+    if request.method == "GET":
+        termins = db_read(
+            """
+            SELECT id, title, date, time, is_exam
+            FROM termins
+            WHERE user_id=%s
+            ORDER BY date, time
+            """,
+            (current_user.id,)
+        )
+        return render_template("main_page.html", termins=termins)
+
+    # POST → Termin erstellen
+    title = request.form["title"]
+    date = request.form["date"]
+    time = request.form["time"]
+
+    if not title or not date or not time:
+        return "Fehler: Titel, Datum und Uhrzeit sind Pflicht", 400
+
+    db_write(
+        """
+        INSERT INTO termins (user_id, title, date, time)
+        VALUES (%s, %s, %s, %s)
+        """,
+        (current_user.id, title, date, time)
+    )
+
+    return redirect(url_for("index"))
+
+
+
+
+
+
+"""
 # App routes
 @app.route("/", methods=["GET", "POST"])
 @login_required
@@ -123,13 +167,30 @@ def index():
     due = request.form["due_at"]
     db_write("INSERT INTO todos (user_id, content, due) VALUES (%s, %s, %s)", (current_user.id, content, due, ))
     return redirect(url_for("index"))
+"""
 
+# Usecase 2 Termin löschen
+
+@app.post("/delete_termin")
+@login_required
+def delete_termin():
+    termin_id = request.form.get("id")
+    db_write(
+        "DELETE FROM termins WHERE user_id=%s AND id=%s",
+        (current_user.id, termin_id)
+    )
+    return redirect(url_for("index"))
+
+
+"""
 @app.post("/complete")
 @login_required
 def complete():
     todo_id = request.form.get("id")
     db_write("DELETE FROM todos WHERE user_id=%s AND id=%s", (current_user.id, todo_id,))
     return redirect(url_for("index"))
+"""
+
 
 if __name__ == "__main__":
     app.run()
