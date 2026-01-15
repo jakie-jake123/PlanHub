@@ -41,9 +41,14 @@
         
         <!-- Als Prüfung markieren -->
         <form action="/mark_exam" method="POST" style="display:inline;">
-          <input type="hidden" name="id" value="{{ termin.id }}">
-          <button type="submit">📝</button>
-        </form>
+  <input type="hidden" name="id" value="{{ termin.id }}">
+
+  {% if termin.is_exam %}
+    <button type="submit" title="Prüfung entfernen">❌📝</button>
+  {% else %}
+    <button type="submit" title="Als Prüfung markieren">📝</button>
+  {% endif %}
+</form>
       </div>
 
     </li>

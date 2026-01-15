@@ -267,10 +267,11 @@ def edit_termin(id):
 def mark_exam():
     termin_id = request.form.get("id")
 
+    # Toggle is_exam
     db_write(
         """
         UPDATE termins
-        SET is_exam = TRUE
+        SET is_exam = NOT is_exam
         WHERE id=%s AND user_id=%s
         """,
         (termin_id, current_user.id)
