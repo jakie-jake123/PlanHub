@@ -14,10 +14,25 @@
   {% for termin in termins %}
     <li class="termin-item">
 
+      
       <div class="termin-info">
-        <strong>{{ termin.title }}</strong><br>
-        <span>📅 {{ termin.date_str }}</span>
-        <span>⏰ {{ termin.time_str }}</span>
+  <strong>{{ termin.title }}</strong><br>
+
+  <span>📅 {{ termin.date.strftime('%d.%m.%Y') }}</span>
+  <span>⏰ {{ termin.time_str }}</span>
+
+  <div
+    class="countdown"
+    data-date="{{ termin.date }}"
+    data-time="{{ termin.time_str }}">
+    ⏳ Lade Countdown...
+  </div>
+
+  {% if termin.is_exam %}
+    <span class="badge">📝 Prüfung</span>
+  {% endif %}
+</div>
+
 
 
         {% if termin.is_exam %}
@@ -96,5 +111,41 @@
 
   <button type="submit" class="btn btn-primary">Termin erstellen</button>
 </form>
+
+
+
+<script>
+function updateCountdowns() {
+  const countdowns = document.querySelectorAll(".countdown");
+
+  countdowns.forEach(cd => {
+    const date = cd.dataset.date;
+    const time = cd.dataset.time;
+
+    const target = new Date(date + "T" + time);
+    const now = new Date();
+    const diff = target - now;
+
+    if (diff <= 0) {
+      cd.innerHTML = "✅ Termin vorbei";
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    cd.innerHTML =
+      `⏳ ${days}d ${hours}h ${minutes}m ${seconds}s`;
+  });
+}
+
+// sofort starten
+updateCountdowns();
+// jede Sekunde aktualisieren
+setInterval(updateCountdowns, 1000);
+</script>
+
 
 {% endblock %}
