@@ -2,6 +2,12 @@
 
 {% block content %}
 
+{% if countdown %}
+  <div class="alert alert-danger">
+    ⏳ <strong>Countdown:</strong> {{ countdown }}
+  </div>
+{% endif %}
+
 <h2>📅 Meine Termine</h2>
 
 <ul class="termin-list">

@@ -9,6 +9,8 @@ from auth import login_manager, authenticate, register_user
 from flask_login import login_user, logout_user, login_required, current_user
 import logging
 
+from datetime import datetime
+
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -118,14 +120,11 @@ def logout():
 @login_required
 def index():
 
-    # 🔹 POST → neuen Termin speichern
+    # POST → Termin erstellen
     if request.method == "POST":
         title = request.form["title"]
         date = request.form["date"]
         time = request.form["time"]
-
-        if not title or not date or not time:
-            return "Fehler: Titel, Datum und Uhrzeit sind Pflicht", 400
 
         db_write(
             """
@@ -134,10 +133,9 @@ def index():
             """,
             (current_user.id, title, date, time)
         )
-
         return redirect(url_for("index"))
 
-    # 🔹 GET → Termine anzeigen
+    # GET → Termine laden
     termins = db_read(
         """
         SELECT id, title, date, time, is_exam
@@ -148,24 +146,36 @@ def index():
         (current_user.id,)
     )
 
-    # 🔹 timedelta → string (Fix für Jinja)
-    from datetime import datetime
+    countdown = None
+    now = datetime.now()
 
     for t in termins:
-        # time (timedelta) → HH:MM
+        # time → string für HTML
         total_seconds = t["time"].total_seconds()
         hours = int(total_seconds // 3600)
         minutes = int((total_seconds % 3600) // 60)
         t["time_str"] = f"{hours:02d}:{minutes:02d}"
 
-        # date → DD.MM.YYYY
-        if isinstance(t["date"], str):
-            t["date_str"] = datetime.strptime(t["date"], "%Y-%m-%d").strftime("%d.%m.%Y")
-        else:
-            t["date_str"] = t["date"].strftime("%d.%m.%Y")
+        # Countdown nur für Prüfungen
+        if t["is_exam"]:
+            termin_datetime = datetime.combine(t["date"], datetime.min.time())
+            termin_datetime = termin_datetime.replace(
+                hour=hours,
+                minute=minutes
+            )
 
+            diff = termin_datetime - now
+            if diff.total_seconds() > 0:
+                days = diff.days
+                hrs = diff.seconds // 3600
+                countdown = f"{t['title']} in {days} Tagen {hrs} Stunden"
 
-    return render_template("main_page.html", termins=termins)
+    return render_template(
+        "main_page.html",
+        termins=termins,
+        countdown=countdown
+    )
+
 
 
 
@@ -249,6 +259,24 @@ def edit_termin(id):
     # GET → Formular anzeigen
     return render_template("edit_termin.html", termin=termin)
 
+
+# countdown oder so
+
+@app.post("/mark_exam")
+@login_required
+def mark_exam():
+    termin_id = request.form.get("id")
+
+    db_write(
+        """
+        UPDATE termins
+        SET is_exam = TRUE
+        WHERE id=%s AND user_id=%s
+        """,
+        (termin_id, current_user.id)
+    )
+
+    return redirect(url_for("index"))
 
 
 
