@@ -2,7 +2,9 @@
 
 {% block content %}
 
-<h2>🗓 Kalender</h2>
+<h2>🗓 Meine Termine</h2>
+
+<!-- Kalender Container -->
 <div id="calendar" style="max-width: 900px; margin: 0 auto;"></div>
 
 <!-- FullCalendar CSS & JS -->
@@ -12,15 +14,16 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const calendarEl = document.getElementById("calendar");
-    
-    // Events aus Flask
+
+    // Events aus Flask (deine termins)
     const events = {{ events|tojson|safe }};
 
+    // FullCalendar Init
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: "dayGridMonth",
         locale: "de",
-        height: 600,      // Fixiert die Höhe, sonst wird nix angezeigt
-        firstDay: 1,      // Wochenstart: Montag
+        height: 600,
+        firstDay: 1, // Montag
         headerToolbar: {
             left: "prev,next today",
             center: "title",

@@ -279,6 +279,14 @@ def mark_exam():
 
     return redirect(url_for("index"))
 
+
+
+
+
+
+
+
+
 @app.route("/calendar")
 @login_required
 def calendar():
@@ -309,7 +317,6 @@ def calendar():
         })
 
     return render_template("calendar.html", events=events)
-
 
 
 
