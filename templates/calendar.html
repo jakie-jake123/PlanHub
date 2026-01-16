@@ -19,8 +19,8 @@ document.addEventListener("DOMContentLoaded", function() {
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: "dayGridMonth",
         locale: "de",
-        height: 600,
-        firstDay: 1, // Montag
+        height: 600,      // Fixiert die Höhe, sonst wird nix angezeigt
+        firstDay: 1,      // Wochenstart: Montag
         headerToolbar: {
             left: "prev,next today",
             center: "title",
@@ -30,9 +30,6 @@ document.addEventListener("DOMContentLoaded", function() {
         eventClick: function(info) {
             const event = info.event;
             let details = "📌 " + event.title + "\n🕒 " + event.start.toLocaleString();
-            if (event.end) {
-                details += "\n⏱ Ende: " + event.end.toLocaleString();
-            }
             alert(details);
         }
     });
