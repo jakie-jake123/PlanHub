@@ -279,6 +279,43 @@ def mark_exam():
 
     return redirect(url_for("index"))
 
+@app.route("/calendar")
+@login_required
+def calendar():
+    termins = db_read(
+        """
+        SELECT id, title, date, time, is_exam
+        FROM termins
+        WHERE user_id = %s
+        """,
+        (current_user.id,)
+    )
+
+    events = []
+
+    for t in termins:
+        # time (timedelta) → HH:MM
+        total_seconds = t["time"].total_seconds()
+        hours = int(total_seconds // 3600)
+        minutes = int((total_seconds % 3600) // 60)
+        time_str = f"{hours:02d}:{minutes:02d}"
+
+        start = f"{t['date']}T{time_str}"
+
+        events.append({
+            "id": t["id"],
+            "title": ("📝 " if t["is_exam"] else "") + t["title"],
+            "start": start
+        })
+
+    return render_template("calendar.html", events=events)
+
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
